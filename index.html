@@ -89,7 +89,7 @@
         "tittie5", "tittiefucker", "titties", "tittyfuck", "tittywank", "titwank", "tosser", "turd", "tw4t", "twat", "twathead", "twatty", "twunt", "twunter", "v14gra", "v1gra", "vagina", "viagra", "vulva", "w00se",
         "wang", "wank", "wanker", "wanky", "whoar", "whore", "willies", "willy", "xrated", "xxx"
       ]
-      if (text.length > 64 || profs.includes(text)) {
+      if (text.length > 64 || profs.includes(text) || text === "") {
         return true
       } else {
         return false
@@ -124,7 +124,7 @@
       document.getElementById("pay-gas").addEventListener('click', async function () {
         let user = document.getElementById("user-input").value;
         if (checkText(user)) {
-          alert("please keep name under 64 characters with no profanity")
+          alert("please keep name non-empty and under 64 characters with no profanity")
         } else {
           payGas(user);
         }
@@ -167,7 +167,7 @@
           document.getElementById("content-text").textContent = "Please wait, this box will update once the transaction is confirmed in about 30 seconds."
           document.getElementById("header-two-text").textContent = "Curious how interacting with a blockchain can be so simple?";
           document.getElementById("content-two-text").textContent = "With most blockchains you need an account, a wallet, and some crypto in order to interact with them. Kadena's solution to this onboarding problem is gas stations; an account that exists only to fund gas payments on behalf of other users."
-          document.getElementById("content-three-text").textContent = "With gas stations a user's first interaction with Kadena can be as simple as filling out a web form."
+          document.getElementById("content-three-text").textContent = "Thanks to gas stations, interacting with Kadena can be as simple as filling out a web form."
           try {
             let hello = await Pact.fetch.listen({"listen": tx.requestKeys[0]}, host);
             if (hello.result.status !== "success"){
