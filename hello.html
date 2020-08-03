@@ -1,0 +1,232 @@
+<html>
+<head>
+    <title>Hello World Kadena</title>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pact-lang-api@4.1.2/pact-lang-api-global.min.js"></script>
+
+    <script>
+
+    const host = `https://us-e1.chainweb.com/chainweb/0.0/mainnet01/chain/0/pact`;
+    var creationTime = () => Math.round((new Date).getTime()/1000)-15;
+
+    var getTotal = async (server) => {
+      const res = await Pact.fetch.local({
+        pactCode: `(free.hello-world.lookup "total")`,
+        meta: Pact.lang.mkMeta("", "", 0.0001, 6000, creationTime(), 600)
+      }, server);
+      let arr=[];
+      let total = res.result.data;
+      if (total >= 19){
+        for (let i=0;i<10;i++){
+          arr.push(i.toString());
+        }
+        for (let i=total-10;i<total;i++){
+          arr.push(i.toString());
+        }
+      } else {
+        for (let i=0;i<total;i++){
+          arr.push(i.toString());
+        }
+      }
+      let pactArr = JSON.stringify(arr).replace(/,/g, ' ');
+      return pactArr;
+    }
+
+    const getUsers = async (list, server) => {
+      const res = await Pact.fetch.local({
+        pactCode: `(map (free.hello-world.lookup) ${list})`,
+        meta: Pact.lang.mkMeta("", "", 0.0001, 6000, creationTime(), 600)
+      }, server);
+      return res.result.data;
+    }
+
+    const createFeed = (idx, user) => {
+      var feedItem = document.createElement("div");
+      feedItem.className = "event";
+      feedItem.setAttribute("id", "feed-item-"+idx)
+      feedItem.innerHTML =
+      `<div class="label">
+        <i class="like icon" id="${idx}-icon"></i>
+      </div>
+      <div class="content">
+        <div class="summary">
+          <a class="user" item="user-name-${idx}">
+          ${user}
+          </a> was here.
+        </div>
+      </div>`
+      return feedItem;
+    }
+
+    const addFeed = (userList) => {
+      let colors = ["orange", "yellow", "olive", "green", "teal", "blue", "violet", "purple", "pink", "brown", "grey"];
+      for (let i=0;i<userList.length;i++){
+        if (userList.length >=19 && i===10){
+          let line = document.createElement("div");
+          line.classList = "ui section divider";
+          document.getElementById("feed-container").appendChild(line)
+          let feed = createFeed(i, userList[i]);
+          document.getElementById("feed-container").appendChild(feed)
+        } else{
+          let feed = createFeed(i, userList[i]);
+          document.getElementById("feed-container").appendChild(feed)
+        }
+        if (i===0){
+          document.getElementById(`${i}-icon`).classList.add("black")
+        } else {
+          document.getElementById(`${i}-icon`).classList.add(colors[Math.floor(Math.random()*colors.length)])
+        }
+      }
+    }
+
+    window.addEventListener('load', async function (event) {
+      const pactArr = await getTotal(host);
+      const listUsers = await getUsers(pactArr, host);
+      addFeed(listUsers);
+      document.getElementById("pay-gas").addEventListener('click', async function () {
+        let user = document.getElementById("user-input").value;
+        payGas(user);
+      }, false);
+      document.getElementById(`hello-world-module`).onclick = () => openModule();
+    }, false);
+
+    const payGas = async (user) => {
+        try {
+          const kp = Pact.crypto.genKeyPair();
+          const tx = await Pact.fetch.send(
+          {
+            networkId: "mainnet01",
+            pactCode: `(free.hello-world.here ${JSON.stringify(user)})`,
+            keyPairs: [
+              {
+                publicKey: kp.publicKey,
+                secretKey: kp.secretKey,
+                clist: [
+                  //capability to use gas station
+                  {
+                    name: `free.hello-world-gas-station.GAS_PAYER`,
+                    args: ["hi", {int: 1}, 1.0]
+                  }
+                ]
+              }],
+            meta: Pact.lang.mkMeta
+            (
+              "hw-gas-payer",
+              "0",
+              0.0000000001,
+              10000,
+              creationTime(),
+              28800
+            )
+          }, host);
+          document.getElementById("requestKey").classList.remove("hidden")
+          document.getElementById("header-text").textContent = "Waiting for TXID";
+          document.getElementById("content-text").textContent = tx.requestKeys[0]
+          try {
+            let hello = await Pact.fetch.listen({"listen": tx.requestKeys[0]}, host);
+            if (hello.result.status !== "success"){
+              document.getElementById("header-text").textContent = "ERROR! INVESTIGATE BELOW";
+              document.getElementById("content-text").textContent = JSON.stringify(hello);
+              document.getElementById("link-text").textContent = "Block Exporer Link";
+              document.getElementById("link-text").href = "https://explorer.chainweb.com/mainnet/tx/" + tx.requestKeys[0];
+            }
+            else {
+              document.getElementById("header-text").textContent = "Success!";
+              document.getElementById("content-text").textContent = JSON.stringify(hello.result.data);
+              document.getElementById("link-text").textContent = "Block Exporer Link";
+              document.getElementById("link-text").href = "https://explorer.chainweb.com/mainnet/tx/" + tx.requestKeys[0];
+            }
+          } catch(e){
+            console.log(e)
+            document.getElementById("header-text").textContent = "Waiting Timed out, but your tx was sent. Look up Below";
+            document.getElementById("content-text").textContent = tx.requestKeys[0];
+            document.getElementById("link-text").textContent = "Block Exporer Link";
+            document.getElementById("link-text").href = "https://explorer.chainweb.com/mainnet/tx/" + tx.requestKeys[0];
+          }
+        } catch(e){
+          document.getElementById("requestKey").classList.remove("hidden")
+          document.getElementById("header-text").textContent = "Transaction was Rejected";
+          document.getElementById("content-text").textContent = "Transaction was not sent to Blockchain. Check your keys or metadata"
+        }
+    }
+
+    const openModule = async function(){
+      try {
+        const response = await Pact.fetch.local({
+            pactCode: `(describe-module "hello-world")`,
+            meta: Pact.lang.mkMeta("", "", 0.0001, 6000, creationTime(), 600)
+          }, host)
+        const result = response.result;
+        let text = result.data.code
+        document.getElementById("module-text").classList.add("active")
+        document.getElementById("module-name").innerText = result.data.name;
+        document.getElementById("module-code").innerText = text;
+      } catch(e){
+        console.log(e)
+      }
+    }
+
+    const closeModule = () => {
+      document.getElementById("module-text").classList.remove("active")
+    }
+
+    </script>
+</head>
+<body>
+    <div id="main">
+      <div id=hello-world-container>
+        <div id="module-text" class="ui modal" >
+          <i id="module-close" class="close icon" onClick="closeModule()"></i>
+          <div class="header" id="module-name"></div>
+          <p class="content" id="module-code"></p>
+        </div>
+      </div>
+      <div class="ui raised very padded text container segment" id="container">
+        <h2 class="ui header"><a id="hello-world-module">Hello World</a> </h2>
+        <h3>Engrave your name in the First Smart Contract deployed on Kadena Mainnet.</h2>
+        <div class="ui input" id="input">
+          <input type="text" id="user-input">
+          <button class="ui teal right button" id="pay-gas">
+            Was Here
+          </button>
+        </div>
+        <div class="ui message hidden" id="requestKey">
+          <div id="header-text" class="header"></div>
+          <p id="content-text"></p>
+          <a href="" id="link-text"></a>
+        </div>
+        <div class="ui large feed" id="feed-container">
+          <div class="event" id="feed-item">
+           </div>
+        </div>
+      </div>
+  </div>
+</body>
+<style>
+
+#container{
+  margin-top: 50px;
+}
+#input{
+   margin-top: 5px;
+}
+i.close.icon::before {
+  cursor: pointer;
+  position: absolute;
+  font-size: 20px;
+  color: black;
+  left: -33px;
+  top: 48px;
+}
+#hello-world-container{
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+#module-text{
+  margin-top: 30px;
+}
+</style>
+</html>
