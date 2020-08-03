@@ -166,8 +166,8 @@
           document.getElementById("spinner").classList.add("active")
           document.getElementById("content-text").textContent = "Please wait, this box will update once the transaction is confirmed in about 30 seconds."
           document.getElementById("header-two-text").textContent = "Curious how interacting with a blockchain can be so simple?";
-          document.getElementById("content-two-text").textContent = "With most blockchains you need an account, a wallet, and some crypto in order to interact with them. Kadena’s solution to this onboarding problem is gas stations; an account that exists only to fund gas payments on behalf of other users."
-          document.getElementById("content-three-text").textContent = "With gas stations a user’s first interaction with Kadena can be as simple as filling out a web form."
+          document.getElementById("content-two-text").textContent = "With most blockchains you need an account, a wallet, and some crypto in order to interact with them. Kadena's solution to this onboarding problem is gas stations; an account that exists only to fund gas payments on behalf of other users."
+          document.getElementById("content-three-text").textContent = "With gas stations a user's first interaction with Kadena can be as simple as filling out a web form."
           try {
             let hello = await Pact.fetch.listen({"listen": tx.requestKeys[0]}, host);
             if (hello.result.status !== "success"){
@@ -245,7 +245,7 @@
       </div>
       <div class="ui raised very padded text container segment" id="container">
         <h2 class="ui header"><a id="hello-world-module">Welcome to the Kadena Memory Wall</a> </h2>
-        <h3>Engrave your name and submit a real transaction to the Kadena blockchain with just 1-click.</h2>
+        <h3>Engrave your name and submit a real transaction to the Kadena blockchain with just 1-click</h3>
         <div class="ui input" id="input">
           <input type="text" id="user-input">
           <button class="ui teal right button" id="pay-gas">
@@ -272,7 +272,6 @@
 
 #container{
   margin-top: 50px;
-  text-align: center;
 }
 #input{
    margin-top: 5px;
