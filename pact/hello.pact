@@ -12,22 +12,24 @@
   name:string
   bh:integer)
 
-(deftable name-table:{name-schema})
+(deftable memories:{name-schema})
 
 (defun here (n:string)
   "Designed for /send calls. Leave your trace on Kadena mainnet!"
   (enforce (!= n "") "Name cannot be empty")
-  (with-default-read name-table "total"
-    {"name": 0, "bh": 0}
-    {"name":= total, "bh":= bh}
-    (write name-table "total" {"name": (+ total 1), "bh": bh})
-    (write name-table (format "{}" [total]) {"name": n, "bh": (at "block-height" (chain-data))})
-   )
-    (format "{} was here." [n])
+  (write memories n
+    {"name": n, "bh": (at "block-height" (chain-data))}
+  )
+  (format "{} was here." [n])
 )
 
 (defun lookup (key:string)
-  (read name-table key)
+  (read memories key)
+)
+
+(defun get-all ()
+  (map (read memories) (keys memories))
 )
 
 )
+; (create-table memories)

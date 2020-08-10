@@ -12,40 +12,18 @@
     const host = `https://us-e1.chainweb.com/chainweb/0.0/mainnet01/chain/0/pact`;
     var creationTime = () => Math.round((new Date).getTime()/1000)-15;
 
-    // const profanities = require("./prof.js")
-
-    var getTotal = async (server) => {
+    const getLastTen = async (server) => {
       const res = await Pact.fetch.local({
-        pactCode: `(free.hello-world.lookup "total")`,
+        pactCode: `(free.hello-world.get-all)`,
         meta: Pact.lang.mkMeta("", "", 0.0001, 6000, creationTime(), 600)
-      }, server);
-      let arr=[];
-      let total = res.result.data;
-      if (total >= 19){
-        for (let i=0;i<10;i++){
-          arr.push(i.toString());
-        }
-        for (let i=total-10;i<total;i++){
-          arr.push(i.toString());
-        }
-      } else {
-        for (let i=0;i<total;i++){
-          arr.push(i.toString());
-        }
-      }
-      let pactArr = JSON.stringify(arr).replace(/,/g, ' ');
-      return pactArr;
+      }, server)
+      const all = res.result.data
+      all.sort((a, b) => a.bh.int - b.bh.int);
+      const lastTen = all.slice(-10)
+      return lastTen
     }
 
-    const getUsers = async (list, server) => {
-      const res = await Pact.fetch.local({
-        pactCode: `(map (free.hello-world.lookup) ${list})`,
-        meta: Pact.lang.mkMeta("", "", 0.0001, 6000, creationTime(), 600)
-      }, server);
-      return res.result.data;
-    }
-
-    const createFeed = (idx, user) => {
+    const createFeed = (idx, user, href) => {
       var feedItem = document.createElement("div");
       feedItem.className = "event";
       feedItem.setAttribute("id", "feed-item-"+idx)
@@ -55,7 +33,7 @@
       </div>
       <div class="content">
         <div class="summary">
-          <a class="user" item="user-name-${idx}">
+          <a class="user" href="${href}" item="user-name-${idx}">
           ${user}
           </a> was here.
         </div>
@@ -96,31 +74,48 @@
       }
     }
 
-    const addFeed = (userList) => {
+    const addFeed = async () => {
       let colors = ["orange", "yellow", "olive", "green", "teal", "blue", "violet", "purple", "pink", "brown", "grey"];
-      for (let i=0;i<userList.length;i++){
-        if (userList.length >=19 && i===10){
-          let line = document.createElement("div");
-          line.classList = "ui section divider";
-          document.getElementById("feed-container").appendChild(line)
-          let feed = createFeed(i, userList[i]);
-          document.getElementById("feed-container").appendChild(feed)
-        } else{
-          let feed = createFeed(i, userList[i]);
-          document.getElementById("feed-container").appendChild(feed)
-        }
+      let firstMems = [
+        {name: "Kadena", bh: 225378},
+        {name: "Hee Kyun", bh: 228062},
+        {name: "Doug", bh: 228141},
+        {name: "Will", bh: 228149},
+        {name: "BIG BOOTY WARRIOR", bh: 228151},
+        {name: "Taylor", bh: 228217},
+        {name: "Q", bh: 228223},
+        {name: "Emmanuel", bh: 228412},
+        {name: "Emily", bh: 228430},
+        {name: "Linda", bh: 228433}
+      ]
+      firstMems.map((x, i) => {
+        let feed = createFeed(i, x.name, `https://explorer.chainweb.com/mainnet/chain/0/height/${x.bh}` );
+        document.getElementById("feed-container").appendChild(feed)
         if (i===0){
           document.getElementById(`${i}-icon`).classList.add("black")
         } else {
           document.getElementById(`${i}-icon`).classList.add(colors[Math.floor(Math.random()*colors.length)])
         }
-      }
+      })
+      //separate first 10 from last 10
+      let line = document.createElement("div");
+      line.classList = "ui section divider";
+      document.getElementById("feed-container").appendChild(line)
+      const lastTen = await getLastTen(host);
+      lastTen.map((x, i) => {
+        i = i + 10
+        let feed = createFeed(i, x.name, `https://explorer.chainweb.com/mainnet/chain/0/height/${x.bh.int}` );
+        document.getElementById("feed-container").appendChild(feed)
+        if (i===0){
+          document.getElementById(`${i}-icon`).classList.add("black")
+        } else {
+          document.getElementById(`${i}-icon`).classList.add(colors[Math.floor(Math.random()*colors.length)])
+        }
+      })
     }
 
     window.addEventListener('load', async function (event) {
-      const pactArr = await getTotal(host);
-      const listUsers = await getUsers(pactArr, host);
-      addFeed(listUsers);
+      await addFeed();
       document.getElementById("pay-gas").addEventListener('click', async function () {
         let user = document.getElementById("user-input").value;
         if (checkText(user)) {
