@@ -15,7 +15,7 @@
     const getLastTen = async (server) => {
       const res = await Pact.fetch.local({
         pactCode: `(free.hello-world.get-all)`,
-        meta: Pact.lang.mkMeta("", "", 0.0001, 6000, creationTime(), 600)
+        meta: Pact.lang.mkMeta("", "", 0.0001, 60000, creationTime(), 600)
       }, server)
       const all = res.result.data
       all.sort((a, b) => a.bh.int - b.bh.int);
