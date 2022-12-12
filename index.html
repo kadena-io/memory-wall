@@ -9,13 +9,17 @@
 
     <script>
 
-    const host = `https://us-e1.chainweb.com/chainweb/0.0/mainnet01/chain/0/pact`;
+    const host = `https://api.chainweb.com/chainweb/0.0/mainnet01/chain/0/pact`;
     var creationTime = () => Math.round((new Date).getTime()/1000)-15;
+	
+	const GAS_PRICE = 0.0000001;
+    const HIGH_GAS_LIMIT = 100000; // use for local read.
+    const GAS_LIMIT = 10000;
 
     const getLastTen = async (server) => {
       const res = await Pact.fetch.local({
         pactCode: `(free.hello-world.get-all)`,
-        meta: Pact.lang.mkMeta("", "", 0.0001, 6000, creationTime(), 600)
+		  meta: Pact.lang.mkMeta("", "", GAS_PRICE, HIGH_GAS_LIMIT, creationTime(), 600)
       }, server)
       const all = res.result.data
       all.sort((a, b) => a.bh.int - b.bh.int);
@@ -34,7 +38,7 @@
       <div class="content">
         <div class="summary">
           <a class="user" href="${href}" item="user-name-${idx}" target="_blank">
-          ${user}
+          ${escapeHtml(user)}
           </a> was here.
         </div>
       </div>`
@@ -73,6 +77,23 @@
         return false
       }
     }
+	
+	var entityMap = {
+	  '&': '&amp;',
+	  '<': '&lt;',
+	  '>': '&gt;',
+	  '"': '&quot;',
+	  "'": '&#39;',
+	  '/': '&#x2F;',
+	  '`': '&#x60;',
+	  '=': '&#x3D;'
+	};
+
+	function escapeHtml(string) {
+	  return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+		return entityMap[s];
+	  });
+	}
 
     const addFeed = async () => {
       let colors = ["orange", "yellow", "olive", "green", "teal", "blue", "violet", "purple", "pink", "brown", "grey"];
@@ -150,8 +171,8 @@
             (
               "hw-gas-payer",
               "0",
-              0.0000000001,
-              10000,
+              GAS_PRICE,
+              GAS_LIMIT,
               creationTime(),
               28800
             )
@@ -211,7 +232,7 @@
       try {
         const response = await Pact.fetch.local({
             pactCode: `(describe-module "hello-world")`,
-            meta: Pact.lang.mkMeta("", "", 0.0001, 6000, creationTime(), 600)
+			  meta: Pact.lang.mkMeta("", "", GAS_PRICE, HIGH_GAS_LIMIT, creationTime(), 600)
           }, host)
         const result = response.result;
         let text = result.data.code
