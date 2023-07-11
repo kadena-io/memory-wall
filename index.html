@@ -184,6 +184,7 @@
               document.getElementById("content-three-text").textContent = "";
               document.getElementById("link-text").textContent = "View transaction in Block Explorer";
               document.getElementById("link-text").href = "https://explorer.chainweb.com/mainnet/tx/" + tx.requestKeys[0];
+              showModal();
             }
           } catch(e){
             console.log(e)
@@ -227,6 +228,14 @@
       document.getElementById("module-text").classList.remove("active")
     }
 
+    const showModal = () => {
+      document.getElementById("modal").classList.add("visible");
+    };
+
+    const hideModal = () => {
+      document.getElementById("modal").classList.remove("visible");
+    };
+
     </script>
 </head>
 <body>
@@ -262,6 +271,34 @@
         </div>
       </div>
   </div>
+  <div class="modal-wrapper" id="modal">
+    <div class="modal-body">
+      <div class="modal-header">
+        <h2 class="heading">Modal Header</h2>
+        <a
+          onclick="hideModal()"
+          role="button"
+          class="close"
+          aria-label="close this modal"
+        >
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M24 20.188l-8.315-8.209 8.2-8.282-3.697-3.697-8.212 8.318-8.31-8.203-3.666 3.666 8.321 8.24-8.206 8.313 3.666 3.666 8.237-8.318 8.285 8.203z"
+            />
+          </svg>
+        </a>
+      </div>
+      <p>Here is your secret code for the VueSchool Competition:</p>
+      <pre>Gas_Stations_Rocks!</pre>
+
+      <p>
+        If you want chance to win an exculsive hoodie and join our
+        builder community, enter the VueSchool competition here:
+      </p>
+    </div>
+    <div class="outside-trigger" onclick="hideModal()"></div>
+  </div>
+</div>
 </body>
 <style>
 
@@ -291,6 +328,78 @@ i.close.icon::before {
 }
 #module-text{
   margin-top: 30px;
+}
+
+.modal-header {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+}
+
+.close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  height: 16px;
+  text-decoration: none;
+  width: 16px;
+
+  svg {
+    width: 16px;
+  }
+}
+
+.modal-wrapper {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.7);
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+}
+
+#modal {
+  opacity: 0;
+  transition: opacity;
+  visibility: hidden;
+}
+
+#modal.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+#modal.visible .modal-body {
+  opacity: 1;
+  transform: translateY(1);
+}
+
+.modal-body {
+  max-width: 500px;
+  opacity: 0;
+  transform: translateY(-100px);
+  transition: opacity;
+  width: 100%;
+  z-index: 1;
+  background: #ffffff;
+  padding: 15px 20px;
+}
+
+.outside-trigger {
+  bottom: 0;
+  cursor: default;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+}
+
+.button__link {
+  text-decoration: none;
 }
 </style>
 </html>
