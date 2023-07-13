@@ -1,34 +1,44 @@
 <html>
-<head>
+  <head>
     <title>Kadena Memory Wall</title>
-    <script src="https://code.jquery.com/jquery-3.1.1.min.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
-    <link rel="icon" href="https://explorer.chainweb.com/static/img/favicon/0d63dkd822sxczcy51lbhqgflzdxw6lhgf88x2j7kc55hcpk120y-favicon-96x96.png">
+    <script
+      src="https://code.jquery.com/jquery-3.1.1.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css"
+    />
+    <link
+      rel="icon"
+      href="https://explorer.chainweb.com/static/img/favicon/0d63dkd822sxczcy51lbhqgflzdxw6lhgf88x2j7kc55hcpk120y-favicon-96x96.png"
+    />
     <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pact-lang-api@4.1.2/pact-lang-api-global.min.js"></script>
 
     <script>
+      const host = `https://us-e1.chainweb.com/chainweb/0.0/mainnet01/chain/0/pact`;
+      var creationTime = () => Math.round(new Date().getTime() / 1000) - 15;
 
-    const host = `https://us-e1.chainweb.com/chainweb/0.0/mainnet01/chain/0/pact`;
-    var creationTime = () => Math.round((new Date).getTime()/1000)-15;
+      const getLastTen = async (server) => {
+        const res = await Pact.fetch.local(
+          {
+            pactCode: `(free.hello-world.get-all)`,
+            meta: Pact.lang.mkMeta('', '', 0.0001, 6000, creationTime(), 600),
+          },
+          server,
+        );
+        const all = res.result.data;
+        all.sort((a, b) => a.bh.int - b.bh.int);
+        const lastTen = all.slice(-10);
+        return lastTen;
+      };
 
-    const getLastTen = async (server) => {
-      const res = await Pact.fetch.local({
-        pactCode: `(free.hello-world.get-all)`,
-        meta: Pact.lang.mkMeta("", "", 0.0001, 6000, creationTime(), 600)
-      }, server)
-      const all = res.result.data
-      all.sort((a, b) => a.bh.int - b.bh.int);
-      const lastTen = all.slice(-10)
-      return lastTen
-    }
-
-    const createFeed = (idx, user, href) => {
-      var feedItem = document.createElement("div");
-      feedItem.className = "event";
-      feedItem.setAttribute("id", "feed-item-"+idx)
-      feedItem.innerHTML =
-      `<div class="label">
+      const createFeed = (idx, user, href) => {
+        var feedItem = document.createElement('div');
+        feedItem.className = 'event';
+        feedItem.setAttribute('id', 'feed-item-' + idx);
+        feedItem.innerHTML = `<div class="label">
         <i class="like icon" id="${idx}-icon"></i>
       </div>
       <div class="content">
@@ -37,224 +47,713 @@
           ${user}
           </a> was here.
         </div>
-      </div>`
-      return feedItem;
-    }
+      </div>`;
+        return feedItem;
+      };
 
-    const checkText = (text) => {
-      const profs = [
-        "4r5e", "5h1t", "5hit", "a55", "anal", "anus", "ar5e", "arrse", "arse", "ass", "ass-fucker", "asses", "assfucker", "assfukka", "asshole", "assholes", "asswhole", "a_s_s", "b!tch", "b00bs",
-        "b17ch", "b1tch", "ballbag", "balls", "ballsack", "bastard", "beastial", "beastiality", "bellend", "bestial", "bestiality", "bi+ch", "biatch", "bitch", "bitcher", "bitchers", "bitches", "bitchin", "bitching", "bloody",
-        "blow job", "blowjob", "blowjobs", "boiolas", "bollock", "bollok", "boner", "boob", "boobs", "booobs", "boooobs", "booooobs", "booooooobs", "breasts", "buceta", "bugger", "bum", "bunny fucker", "butt", "butthole",
-        "buttmuch", "buttplug", "c0ck", "c0cksucker", "carpet muncher", "cawk", "chink", "cipa", "cl1t", "clit", "clitoris", "clits", "cnut", "cock", "cock-sucker", "cockface", "cockhead", "cockmunch", "cockmuncher", "cocks",
-        "cocksuck", "cocksucked", "cocksucker", "cocksucking", "cocksucks", "cocksuka", "cocksukka", "cok", "cokmuncher", "coksucka", "coon", "cox", "crap", "cum", "cummer", "cumming", "cums", "cumshot", "cunilingus", "cunillingus",
-        "cunnilingus", "cunt", "cuntlick", "cuntlicker", "cuntlicking", "cunts", "cyalis", "cyberfuc", "cyberfuck", "cyberfucked", "cyberfucker", "cyberfuckers", "cyberfucking", "d1ck", "damn", "dick", "dickhead", "dildo", "dildos", "dink",
-        "dinks", "dirsa", "dlck", "dog-fucker", "doggin", "dogging", "donkeyribber", "doosh", "duche", "dyke", "ejaculate", "ejaculated", "ejaculates", "ejaculating", "ejaculatings", "ejaculation", "ejakulate", "f u c k", "f u c k e r", "f4nny",
-        "fag", "fagging", "faggitt", "faggot", "faggs", "fagot", "fagots", "fags", "fanny", "fannyflaps", "fannyfucker", "fanyy", "fatass", "fcuk", "fcuker", "fcuking", "feck", "fecker", "felching", "fellate",
-        "fellatio", "fingerfuck", "fingerfucked", "fingerfucker", "fingerfuckers", "fingerfucking", "fingerfucks", "fistfuck", "fistfucked", "fistfucker", "fistfuckers", "fistfucking", "fistfuckings", "fistfucks", "flange", "fook", "fooker", "fuck", "fucka", "fucked",
-        "fucker", "fuckers", "fuckhead", "fuckheads", "fuckin", "fucking", "fuckings", "fuckingshitmotherfucker", "fuckme", "fucks", "fuckwhit", "fuckwit", "fudge packer", "fudgepacker", "fuk", "fuker", "fukker", "fukkin", "fuks", "fukwhit",
-        "fukwit", "fux", "fux0r", "f_u_c_k", "gangbang", "gangbanged", "gangbangs", "gaylord", "gaysex", "goatse", "God", "god-dam", "god-damned", "goddamn", "goddamned", "hardcoresex", "hell", "heshe", "hoar", "hoare",
-        "hoer", "homo", "hore", "horniest", "horny", "hotsex", "jack-off", "jackoff", "jap", "jerk-off", "jism", "jiz", "jizm", "jizz", "kawk", "knob", "knobead", "knobed", "knobend", "knobhead",
-        "knobjocky", "knobjokey", "kock", "kondum", "kondums", "kum", "kummer", "kumming", "kums", "kunilingus", "l3i+ch", "l3itch", "labia", "lust", "lusting", "m0f0", "m0fo", "m45terbate", "ma5terb8", "ma5terbate",
-        "masochist", "master-bate", "masterb8", "masterbat*", "masterbat3", "masterbate", "masterbation", "masterbations", "masturbate", "mo-fo", "mof0", "mofo", "mothafuck", "mothafucka", "mothafuckas", "mothafuckaz", "mothafucked", "mothafucker", "mothafuckers", "mothafuckin",
-        "mothafucking", "mothafuckings", "mothafucks", "mother fucker", "motherfuck", "motherfucked", "motherfucker", "motherfuckers", "motherfuckin", "motherfucking", "motherfuckings", "motherfuckka", "motherfucks", "muff", "mutha", "muthafecker", "muthafuckker", "muther", "mutherfucker", "n1gga",
-        "n1gger", "nazi", "nigg3r", "nigg4h", "nigga", "niggah", "niggas", "niggaz", "nigger", "niggers", "nob", "nob jokey", "nobhead", "nobjocky", "nobjokey", "numbnuts", "nutsack", "orgasim", "orgasims", "orgasm",
-        "orgasms", "p0rn", "pawn", "pecker", "penis", "penisfucker", "phonesex", "phuck", "phuk", "phuked", "phuking", "phukked", "phukking", "phuks", "phuq", "pigfucker", "pimpis", "piss", "pissed", "pisser",
-        "pissers", "pisses", "pissflaps", "pissin", "pissing", "pissoff", "poop", "porn", "porno", "pornography", "pornos", "prick", "pricks", "pron", "pube", "pusse", "pussi", "pussies", "pussy", "pussys",
-        "rectum", "retard", "rimjaw", "rimming", "s hit", "s.o.b.", "sadist", "schlong", "screwing", "scroat", "scrote", "scrotum", "semen", "sex", "sh!+", "sh!t", "sh1t", "shag", "shagger", "shaggin",
-        "shagging", "shemale", "shi+", "shit", "shitdick", "shite", "shited", "shitey", "shitfuck", "shitfull", "shithead", "shiting", "shitings", "shits", "shitted", "shitter", "shitters", "shitting", "shittings", "shitty",
-        "skank", "slut", "sluts", "smegma", "smut", "snatch", "son-of-a-bitch", "spac", "spunk", "s_h_i_t", "t1tt1e5", "t1tties", "teets", "teez", "testical", "testicle", "tit", "titfuck", "tits", "titt",
-        "tittie5", "tittiefucker", "titties", "tittyfuck", "tittywank", "titwank", "tosser", "turd", "tw4t", "twat", "twathead", "twatty", "twunt", "twunter", "v14gra", "v1gra", "vagina", "viagra", "vulva", "w00se",
-        "wang", "wank", "wanker", "wanky", "whoar", "whore", "willies", "willy", "xrated", "xxx"
-      ]
-      if (text.length > 64 || profs.includes(text) || text === "") {
-        return true
-      } else {
-        return false
-      }
-    }
-
-    const addFeed = async () => {
-      let colors = ["orange", "yellow", "olive", "green", "teal", "blue", "violet", "purple", "pink", "brown", "grey"];
-      let firstMems = [
-        {name: "Kadena", bh: 225378},
-        {name: "Hee Kyun", bh: 228062},
-        {name: "Doug", bh: 228141},
-        {name: "Will", bh: 228149},
-        {name: "BIG BOOTY WARRIOR", bh: 228151},
-        {name: "Taylor", bh: 228217},
-        {name: "Q", bh: 228223},
-        {name: "Emmanuel", bh: 228412},
-        {name: "Emily", bh: 228430},
-        {name: "Linda", bh: 228433}
-      ]
-      firstMems.map((x, i) => {
-        let feed = createFeed(i, x.name, `https://explorer.chainweb.com/mainnet/chain/0/height/${x.bh}` );
-        document.getElementById("feed-container").appendChild(feed)
-        if (i===0){
-          document.getElementById(`${i}-icon`).classList.add("black")
+      const checkText = (text) => {
+        const profs = [
+          '4r5e',
+          '5h1t',
+          '5hit',
+          'a55',
+          'anal',
+          'anus',
+          'ar5e',
+          'arrse',
+          'arse',
+          'ass',
+          'ass-fucker',
+          'asses',
+          'assfucker',
+          'assfukka',
+          'asshole',
+          'assholes',
+          'asswhole',
+          'a_s_s',
+          'b!tch',
+          'b00bs',
+          'b17ch',
+          'b1tch',
+          'ballbag',
+          'balls',
+          'ballsack',
+          'bastard',
+          'beastial',
+          'beastiality',
+          'bellend',
+          'bestial',
+          'bestiality',
+          'bi+ch',
+          'biatch',
+          'bitch',
+          'bitcher',
+          'bitchers',
+          'bitches',
+          'bitchin',
+          'bitching',
+          'bloody',
+          'blow job',
+          'blowjob',
+          'blowjobs',
+          'boiolas',
+          'bollock',
+          'bollok',
+          'boner',
+          'boob',
+          'boobs',
+          'booobs',
+          'boooobs',
+          'booooobs',
+          'booooooobs',
+          'breasts',
+          'buceta',
+          'bugger',
+          'bum',
+          'bunny fucker',
+          'butt',
+          'butthole',
+          'buttmuch',
+          'buttplug',
+          'c0ck',
+          'c0cksucker',
+          'carpet muncher',
+          'cawk',
+          'chink',
+          'cipa',
+          'cl1t',
+          'clit',
+          'clitoris',
+          'clits',
+          'cnut',
+          'cock',
+          'cock-sucker',
+          'cockface',
+          'cockhead',
+          'cockmunch',
+          'cockmuncher',
+          'cocks',
+          'cocksuck',
+          'cocksucked',
+          'cocksucker',
+          'cocksucking',
+          'cocksucks',
+          'cocksuka',
+          'cocksukka',
+          'cok',
+          'cokmuncher',
+          'coksucka',
+          'coon',
+          'cox',
+          'crap',
+          'cum',
+          'cummer',
+          'cumming',
+          'cums',
+          'cumshot',
+          'cunilingus',
+          'cunillingus',
+          'cunnilingus',
+          'cunt',
+          'cuntlick',
+          'cuntlicker',
+          'cuntlicking',
+          'cunts',
+          'cyalis',
+          'cyberfuc',
+          'cyberfuck',
+          'cyberfucked',
+          'cyberfucker',
+          'cyberfuckers',
+          'cyberfucking',
+          'd1ck',
+          'damn',
+          'dick',
+          'dickhead',
+          'dildo',
+          'dildos',
+          'dink',
+          'dinks',
+          'dirsa',
+          'dlck',
+          'dog-fucker',
+          'doggin',
+          'dogging',
+          'donkeyribber',
+          'doosh',
+          'duche',
+          'dyke',
+          'ejaculate',
+          'ejaculated',
+          'ejaculates',
+          'ejaculating',
+          'ejaculatings',
+          'ejaculation',
+          'ejakulate',
+          'f u c k',
+          'f u c k e r',
+          'f4nny',
+          'fag',
+          'fagging',
+          'faggitt',
+          'faggot',
+          'faggs',
+          'fagot',
+          'fagots',
+          'fags',
+          'fanny',
+          'fannyflaps',
+          'fannyfucker',
+          'fanyy',
+          'fatass',
+          'fcuk',
+          'fcuker',
+          'fcuking',
+          'feck',
+          'fecker',
+          'felching',
+          'fellate',
+          'fellatio',
+          'fingerfuck',
+          'fingerfucked',
+          'fingerfucker',
+          'fingerfuckers',
+          'fingerfucking',
+          'fingerfucks',
+          'fistfuck',
+          'fistfucked',
+          'fistfucker',
+          'fistfuckers',
+          'fistfucking',
+          'fistfuckings',
+          'fistfucks',
+          'flange',
+          'fook',
+          'fooker',
+          'fuck',
+          'fucka',
+          'fucked',
+          'fucker',
+          'fuckers',
+          'fuckhead',
+          'fuckheads',
+          'fuckin',
+          'fucking',
+          'fuckings',
+          'fuckingshitmotherfucker',
+          'fuckme',
+          'fucks',
+          'fuckwhit',
+          'fuckwit',
+          'fudge packer',
+          'fudgepacker',
+          'fuk',
+          'fuker',
+          'fukker',
+          'fukkin',
+          'fuks',
+          'fukwhit',
+          'fukwit',
+          'fux',
+          'fux0r',
+          'f_u_c_k',
+          'gangbang',
+          'gangbanged',
+          'gangbangs',
+          'gaylord',
+          'gaysex',
+          'goatse',
+          'God',
+          'god-dam',
+          'god-damned',
+          'goddamn',
+          'goddamned',
+          'hardcoresex',
+          'hell',
+          'heshe',
+          'hoar',
+          'hoare',
+          'hoer',
+          'homo',
+          'hore',
+          'horniest',
+          'horny',
+          'hotsex',
+          'jack-off',
+          'jackoff',
+          'jap',
+          'jerk-off',
+          'jism',
+          'jiz',
+          'jizm',
+          'jizz',
+          'kawk',
+          'knob',
+          'knobead',
+          'knobed',
+          'knobend',
+          'knobhead',
+          'knobjocky',
+          'knobjokey',
+          'kock',
+          'kondum',
+          'kondums',
+          'kum',
+          'kummer',
+          'kumming',
+          'kums',
+          'kunilingus',
+          'l3i+ch',
+          'l3itch',
+          'labia',
+          'lust',
+          'lusting',
+          'm0f0',
+          'm0fo',
+          'm45terbate',
+          'ma5terb8',
+          'ma5terbate',
+          'masochist',
+          'master-bate',
+          'masterb8',
+          'masterbat*',
+          'masterbat3',
+          'masterbate',
+          'masterbation',
+          'masterbations',
+          'masturbate',
+          'mo-fo',
+          'mof0',
+          'mofo',
+          'mothafuck',
+          'mothafucka',
+          'mothafuckas',
+          'mothafuckaz',
+          'mothafucked',
+          'mothafucker',
+          'mothafuckers',
+          'mothafuckin',
+          'mothafucking',
+          'mothafuckings',
+          'mothafucks',
+          'mother fucker',
+          'motherfuck',
+          'motherfucked',
+          'motherfucker',
+          'motherfuckers',
+          'motherfuckin',
+          'motherfucking',
+          'motherfuckings',
+          'motherfuckka',
+          'motherfucks',
+          'muff',
+          'mutha',
+          'muthafecker',
+          'muthafuckker',
+          'muther',
+          'mutherfucker',
+          'n1gga',
+          'n1gger',
+          'nazi',
+          'nigg3r',
+          'nigg4h',
+          'nigga',
+          'niggah',
+          'niggas',
+          'niggaz',
+          'nigger',
+          'niggers',
+          'nob',
+          'nob jokey',
+          'nobhead',
+          'nobjocky',
+          'nobjokey',
+          'numbnuts',
+          'nutsack',
+          'orgasim',
+          'orgasims',
+          'orgasm',
+          'orgasms',
+          'p0rn',
+          'pawn',
+          'pecker',
+          'penis',
+          'penisfucker',
+          'phonesex',
+          'phuck',
+          'phuk',
+          'phuked',
+          'phuking',
+          'phukked',
+          'phukking',
+          'phuks',
+          'phuq',
+          'pigfucker',
+          'pimpis',
+          'piss',
+          'pissed',
+          'pisser',
+          'pissers',
+          'pisses',
+          'pissflaps',
+          'pissin',
+          'pissing',
+          'pissoff',
+          'poop',
+          'porn',
+          'porno',
+          'pornography',
+          'pornos',
+          'prick',
+          'pricks',
+          'pron',
+          'pube',
+          'pusse',
+          'pussi',
+          'pussies',
+          'pussy',
+          'pussys',
+          'rectum',
+          'retard',
+          'rimjaw',
+          'rimming',
+          's hit',
+          's.o.b.',
+          'sadist',
+          'schlong',
+          'screwing',
+          'scroat',
+          'scrote',
+          'scrotum',
+          'semen',
+          'sex',
+          'sh!+',
+          'sh!t',
+          'sh1t',
+          'shag',
+          'shagger',
+          'shaggin',
+          'shagging',
+          'shemale',
+          'shi+',
+          'shit',
+          'shitdick',
+          'shite',
+          'shited',
+          'shitey',
+          'shitfuck',
+          'shitfull',
+          'shithead',
+          'shiting',
+          'shitings',
+          'shits',
+          'shitted',
+          'shitter',
+          'shitters',
+          'shitting',
+          'shittings',
+          'shitty',
+          'skank',
+          'slut',
+          'sluts',
+          'smegma',
+          'smut',
+          'snatch',
+          'son-of-a-bitch',
+          'spac',
+          'spunk',
+          's_h_i_t',
+          't1tt1e5',
+          't1tties',
+          'teets',
+          'teez',
+          'testical',
+          'testicle',
+          'tit',
+          'titfuck',
+          'tits',
+          'titt',
+          'tittie5',
+          'tittiefucker',
+          'titties',
+          'tittyfuck',
+          'tittywank',
+          'titwank',
+          'tosser',
+          'turd',
+          'tw4t',
+          'twat',
+          'twathead',
+          'twatty',
+          'twunt',
+          'twunter',
+          'v14gra',
+          'v1gra',
+          'vagina',
+          'viagra',
+          'vulva',
+          'w00se',
+          'wang',
+          'wank',
+          'wanker',
+          'wanky',
+          'whoar',
+          'whore',
+          'willies',
+          'willy',
+          'xrated',
+          'xxx',
+        ];
+        if (text.length > 64 || profs.includes(text) || text === '') {
+          return true;
         } else {
-          document.getElementById(`${i}-icon`).classList.add(colors[Math.floor(Math.random()*colors.length)])
+          return false;
         }
-      })
-      //separate first 10 from last 10
-      let line = document.createElement("div");
-      line.classList = "ui section divider";
-      document.getElementById("feed-container").appendChild(line)
-      const lastTen = await getLastTen(host);
-      lastTen.map((x, i) => {
-        i = i + 10
-        let feed = createFeed(i, x.name, `https://explorer.chainweb.com/mainnet/chain/0/height/${x.bh.int}` );
-        document.getElementById("feed-container").appendChild(feed)
-        if (i===0){
-          document.getElementById(`${i}-icon`).classList.add("black")
-        } else {
-          document.getElementById(`${i}-icon`).classList.add(colors[Math.floor(Math.random()*colors.length)])
-        }
-      })
-    }
+      };
 
-    window.addEventListener('load', async function (event) {
-      await addFeed();
-      document.getElementById("pay-gas").addEventListener('click', async function () {
-        let user = document.getElementById("user-input").value;
-        if (checkText(user)) {
-          alert("please keep name non-empty and under 64 characters with no profanity")
-        } else {
-          payGas(user);
-        }
-      }, false);
-      document.getElementById(`hello-world-module`).onclick = () => openModule();
-    }, false);
+      const addFeed = async () => {
+        let colors = [
+          'orange',
+          'yellow',
+          'olive',
+          'green',
+          'teal',
+          'blue',
+          'violet',
+          'purple',
+          'pink',
+          'brown',
+          'grey',
+        ];
+        let firstMems = [
+          { name: 'Kadena', bh: 225378 },
+          { name: 'Hee Kyun', bh: 228062 },
+          { name: 'Doug', bh: 228141 },
+          { name: 'Will', bh: 228149 },
+          { name: 'BIG BOOTY WARRIOR', bh: 228151 },
+          { name: 'Taylor', bh: 228217 },
+          { name: 'Q', bh: 228223 },
+          { name: 'Emmanuel', bh: 228412 },
+          { name: 'Emily', bh: 228430 },
+          { name: 'Linda', bh: 228433 },
+        ];
+        firstMems.map((x, i) => {
+          let feed = createFeed(
+            i,
+            x.name,
+            `https://explorer.chainweb.com/mainnet/chain/0/height/${x.bh}`,
+          );
+          document.getElementById('feed-container').appendChild(feed);
+          if (i === 0) {
+            document.getElementById(`${i}-icon`).classList.add('black');
+          } else {
+            document
+              .getElementById(`${i}-icon`)
+              .classList.add(colors[Math.floor(Math.random() * colors.length)]);
+          }
+        });
+        //separate first 10 from last 10
+        let line = document.createElement('div');
+        line.classList = 'ui section divider';
+        document.getElementById('feed-container').appendChild(line);
+        const lastTen = await getLastTen(host);
+        lastTen.map((x, i) => {
+          i = i + 10;
+          let feed = createFeed(
+            i,
+            x.name,
+            `https://explorer.chainweb.com/mainnet/chain/0/height/${x.bh.int}`,
+          );
+          document.getElementById('feed-container').appendChild(feed);
+          if (i === 0) {
+            document.getElementById(`${i}-icon`).classList.add('black');
+          } else {
+            document
+              .getElementById(`${i}-icon`)
+              .classList.add(colors[Math.floor(Math.random() * colors.length)]);
+          }
+        });
+      };
 
-    const payGas = async (user) => {
+      window.addEventListener(
+        'load',
+        async function (event) {
+          await addFeed();
+          document.getElementById('pay-gas').addEventListener(
+            'click',
+            async function () {
+              let user = document.getElementById('user-input').value;
+              if (checkText(user)) {
+                alert(
+                  'please keep name non-empty and under 64 characters with no profanity',
+                );
+              } else {
+                payGas(user);
+              }
+            },
+            false,
+          );
+          document.getElementById(`hello-world-module`).onclick = () =>
+            openModule();
+        },
+        false,
+      );
+
+      const payGas = async (user) => {
         try {
           const kp = Pact.crypto.genKeyPair();
           const tx = await Pact.fetch.send(
-          {
-            networkId: "mainnet01",
-            pactCode: `(free.hello-world.here ${JSON.stringify(user)})`,
-            keyPairs: [
-              {
-                publicKey: kp.publicKey,
-                secretKey: kp.secretKey,
-                clist: [
-                  //capability to use gas station
-                  {
-                    name: `free.hello-world-gas-station.GAS_PAYER`,
-                    args: ["hi", {int: 1}, 1.0]
-                  }
-                ]
-              }],
-            meta: Pact.lang.mkMeta
-            (
-              "hw-gas-payer",
-              "0",
-              0.0000000001,
-              10000,
-              creationTime(),
-              28800
-            )
-          }, host);
-          document.getElementById("requestKey").classList.remove("hidden")
-          document.getElementById("header-text").textContent = "Transaction sent to Kadena Mainnet";
-          document.getElementById("spinner").classList.add("active")
-          document.getElementById("content-text").textContent = "Please wait, this box will update once the transaction is confirmed in about 30 seconds."
-          document.getElementById("header-two-text").textContent = "Curious how interacting with a blockchain can be so simple?";
-          document.getElementById("content-two-text").textContent = "With most blockchains you need an account, a wallet, and some crypto in order to interact with them. Kadena's solution to this onboarding problem is gas stations; an account that exists only to fund gas payments on behalf of other users."
-          document.getElementById("content-three-text").textContent = "Thanks to gas stations, interacting with Kadena can be as simple as filling out a web form."
+            {
+              networkId: 'mainnet01',
+              pactCode: `(free.hello-world.here ${JSON.stringify(user)})`,
+              keyPairs: [
+                {
+                  publicKey: kp.publicKey,
+                  secretKey: kp.secretKey,
+                  clist: [
+                    //capability to use gas station
+                    {
+                      name: `free.hello-world-gas-station.GAS_PAYER`,
+                      args: ['hi', { int: 1 }, 1.0],
+                    },
+                  ],
+                },
+              ],
+              meta: Pact.lang.mkMeta(
+                'hw-gas-payer',
+                '0',
+                0.0000000001,
+                10000,
+                creationTime(),
+                28800,
+              ),
+            },
+            host,
+          );
+          document.getElementById('requestKey').classList.remove('hidden');
+          document.getElementById('header-text').textContent =
+            'Transaction sent to Kadena Mainnet';
+          document.getElementById('spinner').classList.add('active');
+          document.getElementById('content-text').textContent =
+            'Please wait, this box will update once the transaction is confirmed in about 30 seconds.';
+          document.getElementById('header-two-text').textContent =
+            'Curious how interacting with a blockchain can be so simple?';
+          document.getElementById('content-two-text').textContent =
+            "With most blockchains you need an account, a wallet, and some crypto in order to interact with them. Kadena's solution to this onboarding problem is gas stations; an account that exists only to fund gas payments on behalf of other users.";
+          document.getElementById('content-three-text').textContent =
+            'Thanks to gas stations, interacting with Kadena can be as simple as filling out a web form.';
           try {
-            let hello = await Pact.fetch.listen({"listen": tx.requestKeys[0]}, host);
-            if (hello.result.status !== "success"){
-              document.getElementById("header-text").textContent = "ERROR! INVESTIGATE BELOW";
-              document.getElementById("content-text").textContent = JSON.stringify(hello);
-              document.getElementById("spinner").classList.remove("active")
-              document.getElementById("header-two-text").textContent = "";
-              document.getElementById("content-two-text").textContent = "";
-              document.getElementById("content-three-text").textContent = "";
-              document.getElementById("link-text").textContent = "Block Exporer Link";
-              document.getElementById("link-text").href = "https://explorer.chainweb.com/mainnet/tx/" + tx.requestKeys[0];
-            }
-            else {
-              document.getElementById("header-text").textContent = "Success!";
-              document.getElementById("content-text").textContent = JSON.stringify(hello.result.data) + " has been added to the Memory Wall.";
-              document.getElementById("spinner").classList.remove("active")
-              document.getElementById("header-two-text").textContent = "";
-              document.getElementById("content-two-text").textContent = "";
-              document.getElementById("content-three-text").textContent = "";
-              document.getElementById("link-text").textContent = "View transaction in Block Explorer";
-              document.getElementById("link-text").href = "https://explorer.chainweb.com/mainnet/tx/" + tx.requestKeys[0];
+            let hello = await Pact.fetch.listen(
+              { listen: tx.requestKeys[0] },
+              host,
+            );
+            if (hello.result.status !== 'success') {
+              document.getElementById('header-text').textContent =
+                'ERROR! INVESTIGATE BELOW';
+              document.getElementById('content-text').textContent =
+                JSON.stringify(hello);
+              document.getElementById('spinner').classList.remove('active');
+              document.getElementById('header-two-text').textContent = '';
+              document.getElementById('content-two-text').textContent = '';
+              document.getElementById('content-three-text').textContent = '';
+              document.getElementById('link-text').textContent =
+                'Block Exporer Link';
+              document.getElementById('link-text').href =
+                'https://explorer.chainweb.com/mainnet/tx/' + tx.requestKeys[0];
+            } else {
+              document.getElementById('header-text').textContent = 'Success!';
+              document.getElementById('content-text').textContent =
+                JSON.stringify(hello.result.data) +
+                ' has been added to the Memory Wall.';
+              document.getElementById('spinner').classList.remove('active');
+              document.getElementById('header-two-text').textContent = '';
+              document.getElementById('content-two-text').textContent = '';
+              document.getElementById('content-three-text').textContent = '';
+              document.getElementById('link-text').textContent =
+                'View transaction in Block Explorer';
+              document.getElementById('link-text').href =
+                'https://explorer.chainweb.com/mainnet/tx/' + tx.requestKeys[0];
               showModal();
             }
-          } catch(e){
-            console.log(e)
-            document.getElementById("header-text").textContent = "Waiting Timed out, but your tx was sent. Look up Below";
-            document.getElementById("content-text").textContent = tx.requestKeys[0];
-            document.getElementById("spinner").classList.remove("active")
-            document.getElementById("header-two-text").textContent = "";
-            document.getElementById("content-two-text").textContent = "";
-            document.getElementById("content-three-text").textContent = "";
-            document.getElementById("link-text").textContent = "View transaction in Block Explorer";
-            document.getElementById("link-text").href = "https://explorer.chainweb.com/mainnet/tx/" + tx.requestKeys[0];
+          } catch (e) {
+            console.log(e);
+            document.getElementById('header-text').textContent =
+              'Waiting Timed out, but your tx was sent. Look up Below';
+            document.getElementById('content-text').textContent =
+              tx.requestKeys[0];
+            document.getElementById('spinner').classList.remove('active');
+            document.getElementById('header-two-text').textContent = '';
+            document.getElementById('content-two-text').textContent = '';
+            document.getElementById('content-three-text').textContent = '';
+            document.getElementById('link-text').textContent =
+              'View transaction in Block Explorer';
+            document.getElementById('link-text').href =
+              'https://explorer.chainweb.com/mainnet/tx/' + tx.requestKeys[0];
           }
-        } catch(e){
-          document.getElementById("requestKey").classList.remove("hidden")
-          document.getElementById("header-text").textContent = "Transaction was Rejected";
-          document.getElementById("spinner").classList.remove("active")
-          document.getElementById("header-two-text").textContent = "";
-          document.getElementById("content-two-text").textContent = "";
-          document.getElementById("content-three-text").textContent = "";
-          document.getElementById("content-text").textContent = "Transaction was not sent to Blockchain. Check your keys or metadata"
+        } catch (e) {
+          document.getElementById('requestKey').classList.remove('hidden');
+          document.getElementById('header-text').textContent =
+            'Transaction was Rejected';
+          document.getElementById('spinner').classList.remove('active');
+          document.getElementById('header-two-text').textContent = '';
+          document.getElementById('content-two-text').textContent = '';
+          document.getElementById('content-three-text').textContent = '';
+          document.getElementById('content-text').textContent =
+            'Transaction was not sent to Blockchain. Check your keys or metadata';
         }
-    }
+      };
 
-    const openModule = async function(){
-      try {
-        const response = await Pact.fetch.local({
-            pactCode: `(describe-module "hello-world")`,
-            meta: Pact.lang.mkMeta("", "", 0.0001, 6000, creationTime(), 600)
-          }, host)
-        const result = response.result;
-        let text = result.data.code
-        document.getElementById("module-text").classList.add("active")
-        document.getElementById("module-name").innerText = result.data.name;
-        document.getElementById("module-code").innerText = text;
-      } catch(e){
-        console.log(e)
-      }
-    }
+      const openModule = async function () {
+        try {
+          const response = await Pact.fetch.local(
+            {
+              pactCode: `(describe-module "hello-world")`,
+              meta: Pact.lang.mkMeta('', '', 0.0001, 6000, creationTime(), 600),
+            },
+            host,
+          );
+          const result = response.result;
+          let text = result.data.code;
+          document.getElementById('module-text').classList.add('active');
+          document.getElementById('module-name').innerText = result.data.name;
+          document.getElementById('module-code').innerText = text;
+        } catch (e) {
+          console.log(e);
+        }
+      };
 
-    const closeModule = () => {
-      document.getElementById("module-text").classList.remove("active")
-    }
+      const closeModule = () => {
+        document.getElementById('module-text').classList.remove('active');
+      };
 
-    const showModal = () => {
-      document.getElementById("modal").classList.add("visible");
-    };
+      const showModal = () => {
+        document.getElementById('modal').classList.add('visible');
+      };
 
-    const hideModal = () => {
-      document.getElementById("modal").classList.remove("visible");
-    };
-
+      const hideModal = () => {
+        document.getElementById('modal').classList.remove('visible');
+      };
     </script>
-</head>
-<body>
+  </head>
+  <body>
     <div id="main">
-      <div id=hello-world-container>
-        <div id="module-text" class="ui modal" >
+      <div id="hello-world-container">
+        <div id="module-text" class="ui modal">
           <i id="module-close" class="close icon" onClick="closeModule()"></i>
           <div class="header" id="module-name"></div>
           <p class="content" id="module-code"></p>
         </div>
       </div>
       <div class="ui raised very padded text container segment" id="container">
-        <h2 class="ui header" ><a>Welcome to the Kadena Memory Wall</a></h2>
-        <h3>Engrave your name and submit a real transaction to <a id="hello-world-module">this smart contract</a> on the Kadena blockchain with just 1-click</h3>
+        <h2 class="ui header"><a>Welcome to the Kadena Memory Wall</a></h2>
+        <h3>
+          Engrave your name and submit a real transaction to
+          <a id="hello-world-module">this smart contract</a> on the Kadena
+          blockchain with just 1-click
+        </h3>
         <div class="ui input" id="input">
-          <input type="text" id="user-input">
-          <button class="ui teal right button" id="pay-gas">
-            Was Here
-          </button>
+          <input type="text" id="user-input" />
+          <button class="ui teal right button" id="pay-gas">Was Here</button>
         </div>
         <div class="ui message hidden" id="requestKey">
           <div id="header-text" class="header"></div>
@@ -266,142 +765,143 @@
           <a href="" id="link-text"></a>
         </div>
         <div class="ui large feed" id="feed-container">
-          <div class="event" id="feed-item">
-           </div>
+          <div class="event" id="feed-item"></div>
         </div>
       </div>
-  </div>
-  <div class="modal-wrapper" id="modal">
-    <div class="modal-body">
-      <div class="modal-header">
-        <h2 class="heading">You Found the Secret Code!</h2>
-        <a
-          onclick="hideModal()"
-          role="button"
-          class="close"
-          aria-label="close this modal"
-        >
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M24 20.188l-8.315-8.209 8.2-8.282-3.697-3.697-8.212 8.318-8.31-8.203-3.666 3.666 8.321 8.24-8.206 8.313 3.666 3.666 8.237-8.318 8.285 8.203z"
-            />
-          </svg>
-        </a>
-      </div>
-      <p>Here is your secret code for the VueSchool Competition:</p>
-      <pre>Gas_Stations_Rocks!</pre>
-
-      <p>
-        If you want chance to win an exculsive hoodie and join our
-        builder community, enter the VueSchool competition here:
-      </p>
-      
-      <p><a href="https://gleam.io/02IqE/vuejs-forge-episode-4-sweepstake">https://gleam.io/02IqE/vuejs-forge-episode-4-sweepstake</a></p>
     </div>
-    <div class="outside-trigger" onclick="hideModal()"></div>
-  </div>
-</div>
-</body>
-<style>
+    <div class="modal-wrapper" id="modal">
+      <div class="modal-body">
+        <div class="modal-header">
+          <h2 class="heading">You Found the Secret Code!</h2>
+          <a
+            onclick="hideModal()"
+            role="button"
+            class="close"
+            aria-label="close this modal"
+          >
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M24 20.188l-8.315-8.209 8.2-8.282-3.697-3.697-8.212 8.318-8.31-8.203-3.666 3.666 8.321 8.24-8.206 8.313 3.666 3.666 8.237-8.318 8.285 8.203z"
+              />
+            </svg>
+          </a>
+        </div>
+        <p>Here is your secret code for the VueSchool Competition:</p>
+        <pre>Gas_Stations_Rocks!</pre>
 
-#container{
-  margin-top: 50px;
-}
-#input{
-   margin-top: 5px;
-}
-#spinner{
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-i.close.icon::before {
-  cursor: pointer;
-  position: absolute;
-  font-size: 20px;
-  color: black;
-  left: -33px;
-  top: 48px;
-}
-#hello-world-container{
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-  text-align: center;
-}
-#module-text{
-  margin-top: 30px;
-}
+        <p>
+          If you want chance to win an exculsive hoodie and join our builder
+          community, enter the VueSchool competition here:
+        </p>
 
-.modal-header {
-  align-items: baseline;
-  display: flex;
-  justify-content: space-between;
-}
+        <p>
+          <a href="https://gleam.io/02IqE/vuejs-forge-episode-4-sweepstake"
+            >https://gleam.io/02IqE/vuejs-forge-episode-4-sweepstake</a
+          >
+        </p>
+      </div>
+      <div class="outside-trigger" onclick="hideModal()"></div>
+    </div>
+  </body>
+  <style>
+    #container {
+      margin-top: 50px;
+    }
+    #input {
+      margin-top: 5px;
+    }
+    #spinner {
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+    i.close.icon::before {
+      cursor: pointer;
+      position: absolute;
+      font-size: 20px;
+      color: black;
+      left: -33px;
+      top: 48px;
+    }
+    #hello-world-container {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      text-align: center;
+    }
+    #module-text {
+      margin-top: 30px;
+    }
 
-.close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  height: 16px;
-  text-decoration: none;
-  width: 16px;
+    .modal-header {
+      align-items: baseline;
+      display: flex;
+      justify-content: space-between;
+    }
 
-  svg {
-    width: 16px;
-  }
-}
+    .close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      height: 16px;
+      text-decoration: none;
+      width: 16px;
 
-.modal-wrapper {
-  align-items: center;
-  background: rgba(0, 0, 0, 0.7);
-  bottom: 0;
-  display: flex;
-  justify-content: center;
-  left: 0;
-  position: fixed;
-  right: 0;
-  top: 0;
-}
+      svg {
+        width: 16px;
+      }
+    }
 
-#modal {
-  opacity: 0;
-  transition: opacity;
-  visibility: hidden;
-}
+    .modal-wrapper {
+      align-items: center;
+      background: rgba(0, 0, 0, 0.7);
+      bottom: 0;
+      display: flex;
+      justify-content: center;
+      left: 0;
+      position: fixed;
+      right: 0;
+      top: 0;
+    }
 
-#modal.visible {
-  opacity: 1;
-  visibility: visible;
-}
+    #modal {
+      opacity: 0;
+      transition: opacity;
+      visibility: hidden;
+    }
 
-#modal.visible .modal-body {
-  opacity: 1;
-  transform: translateY(1);
-}
+    #modal.visible {
+      opacity: 1;
+      visibility: visible;
+    }
 
-.modal-body {
-  max-width: 500px;
-  opacity: 0;
-  transform: translateY(-100px);
-  transition: opacity;
-  width: 100%;
-  z-index: 1;
-  background: #ffffff;
-  padding: 15px 20px;
-}
+    #modal.visible .modal-body {
+      opacity: 1;
+      transform: translateY(1);
+    }
 
-.outside-trigger {
-  bottom: 0;
-  cursor: default;
-  left: 0;
-  position: fixed;
-  right: 0;
-  top: 0;
-}
+    .modal-body {
+      max-width: 500px;
+      opacity: 0;
+      transform: translateY(-100px);
+      transition: opacity;
+      width: 100%;
+      z-index: 1;
+      background: #ffffff;
+      padding: 15px 20px;
+    }
 
-.button__link {
-  text-decoration: none;
-}
-</style>
+    .outside-trigger {
+      bottom: 0;
+      cursor: default;
+      left: 0;
+      position: fixed;
+      right: 0;
+      top: 0;
+    }
+
+    .button__link {
+      text-decoration: none;
+    }
+  </style>
 </html>
