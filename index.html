@@ -17,14 +17,24 @@
     <script src="https://cdn.jsdelivr.net/npm/pact-lang-api@4.1.2/pact-lang-api-global.min.js"></script>
 
     <script>
-      const host = `https://us-e1.chainweb.com/chainweb/0.0/mainnet01/chain/0/pact`;
+      const host = `https://api.chainweb.com/chainweb/0.0/mainnet01/chain/0/pact`;
       var creationTime = () => Math.round(new Date().getTime() / 1000) - 15;
 
+      const GAS_PRICE = 0.0000001;
+      const HIGH_GAS_LIMIT = 100000; // use for local read.
+      const GAS_LIMIT = 10000;
       const getLastTen = async (server) => {
         const res = await Pact.fetch.local(
           {
             pactCode: `(free.hello-world.get-all)`,
-            meta: Pact.lang.mkMeta('', '', 0.0001, 6000, creationTime(), 600),
+            meta: Pact.lang.mkMeta(
+              '',
+              '',
+              GAS_PRICE,
+              HIGH_GAS_LIMIT,
+              creationTime(),
+              600,
+            ),
           },
           server,
         );
@@ -589,6 +599,7 @@
                 );
               } else {
                 payGas(user);
+                showModal();
               }
             },
             false,
@@ -622,8 +633,8 @@
               meta: Pact.lang.mkMeta(
                 'hw-gas-payer',
                 '0',
-                0.0000000001,
-                10000,
+                GAS_PRICE,
+                GAS_LIMIT,
                 creationTime(),
                 28800,
               ),
@@ -673,7 +684,6 @@
                 'View transaction in Block Explorer';
               document.getElementById('link-text').href =
                 'https://explorer.chainweb.com/mainnet/tx/' + tx.requestKeys[0];
-              showModal();
             }
           } catch (e) {
             console.log(e);
@@ -862,6 +872,7 @@
       position: fixed;
       right: 0;
       top: 0;
+      z-index: 1000;
     }
 
     #modal {
